@@ -1,9 +1,8 @@
 import axios from 'axios';
-import toml from '@iarna/toml';
 import Config from 'react-native-config';
 
 // APIキーとURLの取得
-const API_KEY = Config.SINDRI_API_KEY;
+const API_KEY = Config.SINDRI_API_KEY || "";
 const API_URL_PREFIX = Config.SINDRI_API_URL || "https://sindri.app/api/";
 const API_VERSION = "v1";
 const API_URL = API_URL_PREFIX.concat(API_VERSION);
@@ -32,11 +31,34 @@ async function pollForStatus(endpoint, timeout = 20 * 60) {
   throw new Error(`Polling timed out after ${timeout} seconds.`);
 }
 
+// TOML does not working in React Native environment, so we need to parse it manually.
+function parseTOML(tomlString) {
+  const result = {};
+  const lines = tomlString.split(/\r?\n/);
+
+  lines.forEach(line => {
+    if (line.trim().startsWith('#') || line.trim() === '') return;
+    const [key, value] = line.split('=').map(s => s.trim());
+    if (value === 'true') {
+      result[key] = true;
+    } else if (value === 'false') {
+      result[key] = false;
+    } else if (!isNaN(value)) {
+      result[key] = Number(value);
+    } else {
+      result[key] = value;
+    }
+  });
+
+  return result;
+}
+
 export async function generateProof() {
   try {
     const circuitId = "e98c114f-6b0d-4fe0-9379-4ee91a1c6963";
     console.log("Proving circuit...");
-    const proofInput = toml.stringify({ input: 10 });
+    const tomlString = `input = 10`;
+    const proofInput = parseTOML(tomlString)
     const proveResponse = await axios.post(
       API_URL + `/circuit/${circuitId}/prove`,
       { proof_input: proofInput },

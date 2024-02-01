@@ -9,7 +9,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@iarna/toml": "^2.2.5",
     "axios": "^1.6.7",
     "expo": "~50.0.4",
     "expo-status-bar": "~1.11.1",
